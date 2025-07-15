@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function Sighup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +33,7 @@ export default function Sighup() {
       } else {
 
       }
-    } catch (error) {
+    } catch { 
     } finally {
       setIsLoading(false);
     }

@@ -22,7 +22,7 @@ export default function Chat() {
   const [isGenerating, setIsGenerating] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   const latestMessage = messages.findLast((m) => m.role === 'bot');
@@ -158,9 +158,10 @@ export default function Chat() {
           {messages.length === 0 && !isGenerating && (
             <Card className="border-l p-0">
               <CardHeader className="p-4">
-                <h2 className="text-xl font-semibold">Start by asking for a landing page, e.g., "Create a modern hero section for a tech startup."</h2>
+                <h2 className="text-xl font-semibold">
+                  Start by asking for a landing page, e.g., &quot;Create a modern hero section for a tech startup.&quot;
+                </h2>
               </CardHeader>
-
             </Card>
           )}
 
