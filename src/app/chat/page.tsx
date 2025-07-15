@@ -82,6 +82,7 @@ export default function Chat() {
     a.click();
     URL.revokeObjectURL(url);
   };
+ 
 
   return (
     <div className="h-screen flex flex-col">
