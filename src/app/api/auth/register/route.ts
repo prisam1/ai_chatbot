@@ -31,8 +31,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(user, { status: 201 });
-  } catch (error) {
-    console.error("Registration error:", error);
+  } catch (error:any) {
+    console.error('Registration error:', error.message, error.stack);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
