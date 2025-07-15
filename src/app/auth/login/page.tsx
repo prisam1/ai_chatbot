@@ -8,7 +8,10 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-export default function LoginPage() {
+import { error } from "console";
+
+
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +30,7 @@ export default function LoginPage() {
     setIsLoading(false);
 
     if (result?.error) {
-
+      console.log("->",result.error)
     } else {
 
       router.push("/chat");

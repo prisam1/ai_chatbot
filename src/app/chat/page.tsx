@@ -5,20 +5,34 @@ import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Send, Download } from 'lucide-react';
+import { Send, Download, LogOut } from 'lucide-react';
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from 'next/navigation';
 
 interface Message {
   role: 'user' | 'bot';
   content: string;
 }
 
-export default function ChatPage() {
+export default function Chat() {
+
+
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const latestMessage = messages.findLast((m) => m.role === 'bot');
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.replace('/auth/login');
+    }
+  }, [status, router]);
+
 
   useEffect(() => {
     if (iframeRef.current && latestMessage) {
@@ -72,8 +86,15 @@ export default function ChatPage() {
   return (
     <div className="h-screen flex flex-col">
       <Card className="flex-1 overflow-hidden border-none rounded-none bg-gradient-to-r from-blue-500 to-purple-600">
-        <CardHeader className="px-4 py-2 border-b">
-        <h1 className="text-2xl font-bold">AI Landing Page Generator</h1>
+        <CardHeader className="flex flex-row justify-between px-4 py-2 border-b">
+          <h1 className="text-2xl font-bold">AI Landing Page Generator</h1>
+          <Button
+            variant="destructive"
+            onClick={() => signOut({ callbackUrl: "/auth/login" })}
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </CardHeader>
 
         {/*User & bot message */}
@@ -109,7 +130,6 @@ export default function ChatPage() {
               ))}
             </ScrollArea>
 
-            {/* <Separator className="my-2" /> */}
             <form onSubmit={handleSubmit} className="flex items-center gap-2 px-2 py-3 border-t">
               <Input
                 value={input}
