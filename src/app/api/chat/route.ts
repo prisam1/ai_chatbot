@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { authOptions } from '../../../../lib/auth';
+import { authOptions } from '../../../lib/auth';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 

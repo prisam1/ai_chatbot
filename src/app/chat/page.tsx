@@ -85,7 +85,7 @@ export default function Chat() {
  
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Card className="flex-1 overflow-hidden border-none rounded-none bg-gradient-to-r from-blue-500 to-purple-600">
         <CardHeader className="flex flex-row justify-between px-4 py-2 border-b">
           <h1 className="text-2xl font-bold">AI Landing Page Generator</h1>
@@ -108,7 +108,7 @@ export default function Chat() {
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`relative group p-1 text-${msg.role === 'user' ? 'right' : 'left'}`}
+                  className={`relative group p-1${msg.role === 'user' ? ' text-right' : ' text-left'}`}
                 >
                   <div className="inline-block bg-muted  px-3 py-2 rounded-lg max-w-2xl text-sm whitespace-pre-wrap overflow-auto max-h-60">
                     {msg.content.length > 100 && msg.role === 'bot'
@@ -136,7 +136,7 @@ export default function Chat() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Describe your landing page..."
-                className="flex-1"
+                className="flex-1 placeholder:text-white"
               />
               <Button type="submit" disabled={isGenerating} size="icon">
                 <Send className="w-4 h-4" />
