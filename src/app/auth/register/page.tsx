@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function Sighup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false); 
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +33,7 @@ export default function Sighup() {
       } else {
 
       }
-    } catch { 
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +67,7 @@ export default function Sighup() {
                   id="password"
                   type="password"
                   required
+                  placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
