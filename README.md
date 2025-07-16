@@ -30,7 +30,8 @@ A full-stack AI-powered chatbot application designed to facilitate interactive c
 | Supabase         | PostgreSQL database                        |
 | NextAuth.js      | Auth system with Google/Credentials        |
 | OpenAI/Gemini    | LLM support for HTML generation            |
-| Vercel           | Production deployment                      |
+| Vercel           | Production deployment   
+| SchadCN          | Component Based UI
 
 
 # Steps to setup project
@@ -45,7 +46,7 @@ npm install
 # OR yarn install
 # OR pnpm install
 Environment Variables
-Create a .env file in the root of your project and add the following environment variables.
+Create a .env file in the root of your project and add the environment variables.
  
 npx prisma generate
 Apply Database Migrations:
@@ -55,12 +56,12 @@ This command will apply any pending database schema changes defined in prisma/mi
 Example:
 Once the application is running, navigate to http://localhost:3000.
 Register/Login: Create a new account or log in using existing credentials.
-Start Chatting: Begin a new conversation with the AI to genrerate Landing Page.
+Start Chatting: Begin a new conversation with the AI to generate Landing Page.
 Live Preview: Live preview of generated HTML pages
 View History: Access your past conversations.
  
 
-Contact
-Your Name - Pritam Kumar Samaddar
-Project Link: https://github.com/prisam1/ai_chatbot
-live link : https://ai-chatbot-puce-nine-71.vercel.app
+# Contact
+# Your Name - Pritam Kumar Samaddar
+# Project Link: https://github.com/prisam1/ai_chatbot
+# live link : https://ai-chatbot-puce-nine-71.vercel.app
