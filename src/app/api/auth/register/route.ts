@@ -7,6 +7,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log("DATABASE_URL in production (from env):", process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 30) + '...' : 'UNDEFINED');
+
     if (!email || !password) {
       return new NextResponse("Email and password are required", { status: 400 });
     }
