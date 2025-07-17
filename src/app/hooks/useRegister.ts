@@ -1,4 +1,4 @@
-import { useApi } from './useApi';  
+import { useApi } from './useApi';
 import { toast } from 'sonner';
 
 interface RegisterPayload {
@@ -6,31 +6,29 @@ interface RegisterPayload {
   password: string;
 }
 
-interface RegisterResponse { 
+interface RegisterResponse {
   message: string;
   userId?: string;
 }
 
-export const useRegister = () => {
-  const { loading, error, fetchData } = useApi<RegisterResponse>();
+export const useRegister = () => { 
+  const { loading, error, fetchData } = useApi<RegisterResponse, RegisterPayload>();
 
   const registerUser = async (payload: RegisterPayload) => {
-
-    const response = await fetchData("/api/auth/register", { 
+    const response = await fetchData("/api/auth/register", {
       method: "POST",
-      body: payload,
+      body: payload,  
       successMessage: "Account created successfully! Please log in.",
       onError: (errorMsg) => {
         if (errorMsg.includes("already exists") || errorMsg.includes("409")) {
           toast.error("Account already exists. Please login instead.");
-        } else { 
+        } else {
           toast.error("Internal Server Error");
         }
       }
     });
     return response;
   };
- 
 
   return {
     registerUser,
@@ -38,5 +36,3 @@ export const useRegister = () => {
     error,
   };
 };
-
- 

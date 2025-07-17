@@ -1,4 +1,4 @@
-import { useApi } from './useApi'; 
+import { useApi } from './useApi';
 import { toast } from 'sonner';
 
 interface ChatPromptPayload {
@@ -6,17 +6,18 @@ interface ChatPromptPayload {
 }
 
 interface ChatResponse {
-  html: string; 
+  html: string;
 }
 
 export const useChat = () => {
-  const { loading, error, fetchData } = useApi<ChatResponse>();
+  
+  const { loading, error, fetchData } = useApi<ChatResponse, ChatPromptPayload>();
 
   const generateLandingPage = async (payload: ChatPromptPayload) => {
-    const response = await fetchData('/api/chat', {  
+    const response = await fetchData('/api/chat', {
       method: 'POST',
       body: payload,
-      showToast: false,  
+      showToast: false,
       onError: (errorMsg) => {
         toast.error(`Failed to generate response: ${errorMsg}`);
       }
@@ -26,7 +27,7 @@ export const useChat = () => {
 
   return {
     generateLandingPage,
-    loading,  
-    error,    
+    loading,
+    error,
   };
 };

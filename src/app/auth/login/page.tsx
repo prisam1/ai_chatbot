@@ -34,9 +34,9 @@ export default function Login() {
       if (result.error === "CredentialsSignin") {
         errorMessage = "Invalid email or password.";
       } else {
-        errorMessage = result.error;
+        errorMessage = "Internal Server Error";
       }
-      toast.error("Internal Server Error");
+      toast.error(errorMessage);
     } else {
       toast.success("Successfully logged in!");
       router.push("/chat");
