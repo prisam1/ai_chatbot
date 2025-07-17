@@ -1,67 +1,36 @@
-# ai_chatbot 
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Live - https://ai-chatbot-puce-nine-71.vercel.app/
+## Getting Started
 
-Project Name: AI Landing Page Generator (Chatbot)
-Overview:
-A full-stack AI-powered chatbot application designed to facilitate interactive conversations between users and an artificial intelligence model. It provides secure user authentication, stores conversation history, and is built for scalability and performance. And to generate (landing page) HTML pages as per user requirement.
+First, run the development server:
 
-## 🚀 Features
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-- ✨ AI prompt-to-HTML landing page generator
-- 🧠 Supports Gemini (Google) APIs
-- 🔐 Auth system with Google OAuth and Credentials (NextAuth.js)
-- 📜 Full chat history with message persistence (Prisma + Supabase)
-- 💾 Download generated pages as `.html`
-- 🔁 Session-aware login/logout with redirection
-- 🔍 Live preview of generated HTML pages
-- 🧩 Modular code with custom hooks and services
-- 🎯 Vercel-compatible deployment
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## 🧰 Tech Stack
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-| Tech             | Usage                                     |
-|------------------|--------------------------------------------|
-| Next.js          | App framework (App Router)                |
-| TypeScript       | Type safety                                |
-| Tailwind CSS     | Styling and layout                         |
-| Prisma           | ORM                                        |
-| Supabase         | PostgreSQL database                        |
-| NextAuth.js      | Auth system with Google/Credentials        |
-| OpenAI/Gemini    | LLM support for HTML generation            |
-| Vercel           | Production deployment   
-| SchadCN          | Component Based UI
+## Learn More
 
+To learn more about Next.js, take a look at the following resources:
 
-# Steps to setup project
- 
-git clone https://github.com/prisam1/ai_chatbot
-cd ai_chatbot
-Install NPM packages:
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-Bash
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-npm install
-# OR yarn install
-# OR pnpm install
-Environment Variables
-Create a .env file in the root of your project and add the environment variables.
- 
-npx prisma generate
-Apply Database Migrations:
+## Deploy on Vercel
 
-This command will apply any pending database schema changes defined in prisma/migrations to your connected Supabase database.
- 
-Example:
-Once the application is running, navigate to http://localhost:3000.
-Register/Login: Create a new account or log in using existing credentials.
-Start Chatting: Begin a new conversation with the AI to generate Landing Page.
-Live Preview: Live preview of generated HTML pages
-View History: Access your past conversations.
- 
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-# Contact
-# Your Name - Pritam Kumar Samaddar
-# Project Link: https://github.com/prisam1/ai_chatbot
-# live link : https://ai-chatbot-puce-nine-71.vercel.app
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
