@@ -206,7 +206,7 @@ export default function Chat() {
           )}
 
           {iframeRef && !isGenerating && messages.length !== 0 && (
-            <Card className="border-l p-0 ">
+            <Card className="border-l p-0">
               <iframe
                 ref={iframeRef}
                 title="Live Preview"
