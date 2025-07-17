@@ -7,35 +7,23 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRegister } from "@/app/hooks/useRegister";
 
 export default function Sighup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  const { loading, registerUser } = useRegister();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+    const response = await registerUser({ email, password });
 
-      if (response.ok) {
-
-        router.push("/auth/login");
-      } else {
-
-      }
-    } catch {
-    } finally {
-      setIsLoading(false);
+    if (response) {
+      router.push("/auth/login");
     }
   };
   return (
@@ -72,13 +60,13 @@ export default function Sighup() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing up..." : "Sign Up"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing up..." : "Sign Up"}
               </Button>
             </div>
           </form>
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            Already have an account?
             <Link href="/auth/login" className="underline">
               Login
             </Link>

@@ -8,6 +8,17 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Download, LogOut } from 'lucide-react';
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
+import { useChat } from '../hooks/useChat';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Message {
   role: 'user' | 'bot';
@@ -19,17 +30,21 @@ export default function Chat() {
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const { status } = useSession();
   const router = useRouter();
+ 
+  const { loading: isGenerating, generateLandingPage } = useChat()
 
   const latestMessage = messages.findLast((m) => m.role === 'bot');
+
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.replace('/auth/login');
+      toast.error("You have been logged out or your session has expired.");
     }
   }, [status, router]);
 
@@ -49,28 +64,21 @@ export default function Chat() {
     if (!input.trim()) return;
 
     setMessages((prev) => [...prev, { role: 'user', content: input }]);
-    setIsGenerating(true);
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: input }),
-      });
+    const chatResponse = await generateLandingPage({ prompt: input });
 
-      const data = await res.json();
-      if (res.ok && data.html) {
-        setMessages((prev) => [...prev, { role: 'bot', content: data.html }]);
-      } else {
-        console.error(data.error || 'Unknown error');
-      }
-    } catch (err) {
-      console.error('Request failed', err);
-    } finally {
-      setIsGenerating(false);
-      setInput('');
+    if (chatResponse && chatResponse.html) {
+      setMessages((prev) => [...prev, { role: 'bot', content: chatResponse.html }]);
     }
+    setInput('');
   };
+
+  const handleLogout = async () => {
+    setIsLogoutModalOpen(false);
+    await signOut({ callbackUrl: "/auth/login" });
+    toast.success("Successfully logged out!");
+  };
+
 
   const downloadFile = () => {
     if (!latestMessage) return;
@@ -82,21 +90,44 @@ export default function Chat() {
     a.click();
     URL.revokeObjectURL(url);
   };
- 
+
 
   return (
     <div className="min-h-screen flex flex-col">
       <Card className="flex-1 overflow-hidden border-none rounded-none bg-gradient-to-r from-blue-500 to-purple-600">
         <CardHeader className="flex flex-row justify-between px-4 py-2 border-b">
           <h1 className="text-2xl font-bold">AI Landing Page Generator</h1>
-          <Button
-            variant="destructive"
-            onClick={() => signOut({ callbackUrl: "/auth/login" })}
-          >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+
+          {/*Logout button & Modal */}
+          <Dialog open={isLogoutModalOpen} onOpenChange={setIsLogoutModalOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="destructive"
+                onClick={() => setIsLogoutModalOpen(true)}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Confirm Logout</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to log out? Your current session will be ended.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsLogoutModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
+
 
         {/*User & bot message */}
         <CardContent className={`grid ${"md:grid-cols-2"}  h-full p-0`}>
@@ -111,9 +142,7 @@ export default function Chat() {
                   className={`relative group p-1${msg.role === 'user' ? ' text-right' : ' text-left'}`}
                 >
                   <div className="inline-block bg-muted  px-3 py-2 rounded-lg max-w-2xl text-sm whitespace-pre-wrap overflow-auto max-h-60">
-                    {msg.content.length > 100 && msg.role === 'bot'
-                      ? msg.content
-                      : msg.content}
+                    {msg.content}
                   </div>
 
                   {/*Copy Button */}

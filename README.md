@@ -4,7 +4,7 @@
 
 Project Name: AI Landing Page Generator (Chatbot)
 Overview:
-A full-stack AI-powered chatbot application designed to facilitate interactive conversations between users and an artificial intelligence model. It provides secure user authentication, stores conversation history, and is built for scalability and performance.
+A full-stack AI-powered chatbot application designed to facilitate interactive conversations between users and an artificial intelligence model. It provides secure user authentication, stores conversation history, and is built for scalability and performance. And to generate (landing page) HTML pages as per user requirement.
 
 ## 🚀 Features
 

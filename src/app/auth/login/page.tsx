@@ -8,6 +8,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from 'sonner';
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,8 +29,16 @@ export default function Login() {
     setIsLoading(false);
 
     if (result?.error) {
-    } else {
+      let errorMessage = "Login failed. Please check your credentials.";
 
+      if (result.error === "CredentialsSignin") {
+        errorMessage = "Invalid email or password.";
+      } else {
+        errorMessage = result.error;
+      }
+      toast.error("Internal Server Error");
+    } else {
+      toast.success("Successfully logged in!");
       router.push("/chat");
     }
   };

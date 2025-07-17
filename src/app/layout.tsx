@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css"; 
-import NextAuthSessionProvider from "../components/providers/next-auth-provider"; 
- 
+import "./globals.css";
+import NextAuthSessionProvider from "../components/providers/next-auth-provider";
+import { Toaster } from 'sonner';
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -17,9 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}> 
+      <body className={inter.className}>
         <NextAuthSessionProvider>
-          {children} 
+          {children}
+          <Toaster position="top-center" richColors />
         </NextAuthSessionProvider>
       </body>
     </html>
