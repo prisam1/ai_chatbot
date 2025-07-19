@@ -21,7 +21,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
+    <div className=" min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
       <h1 className="text-5xl font-extrabold mb-6 text-center leading-tight">
         Generate Stunning Landing Pages with AI
       </h1>

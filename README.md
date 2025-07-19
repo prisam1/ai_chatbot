@@ -1,4 +1,4 @@
-# ai_chatbot 
+## AI Landing Page Generator
 
 ## Live - https://ai-chatbot-puce-nine-71.vercel.app/
 
@@ -36,7 +36,7 @@ A full-stack AI-powered chatbot application designed to facilitate interactive c
 
 # Steps to setup project
  
-git clone https://github.com/prisam1/ai_chatbot
+# git clone : https://github.com/prisam1/ai_chatbot
 cd ai_chatbot
 Install NPM packages:
 
@@ -44,7 +44,7 @@ Bash
 
 npm install
 # OR yarn install
-# OR pnpm install
+# OR npm install
 Environment Variables
 Create a .env file in the root of your project and add the environment variables.
  
@@ -57,7 +57,8 @@ Example:
 Once the application is running, navigate to http://localhost:3000.
 Register/Login: Create a new account or log in using existing credentials.
 Start Chatting: Begin a new conversation with the AI to generate Landing Page.
-Live Preview: Live preview of generated HTML pages
+Live Preview: Live preview of generated HTML page.
+Download: Download Landing page.
 View History: Access your past conversations.
  
 

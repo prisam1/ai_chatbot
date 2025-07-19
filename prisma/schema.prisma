@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String?
-  email          String    @unique  
+  email          String        @unique
   emailVerified  DateTime?
   image          String?
-  hashedPassword String?  
-  accounts Account[]
-  sessions Session[]
-  chatMessages ChatMessage[] // A User can have many ChatMessages
-  createdAt DateTime @default(now())  
-  updatedAt DateTime @updatedAt
+  hashedPassword String?
+  accounts       Account[]
+  sessions       Session[]
+  chatMessages   ChatMessage[] // A User can have many ChatMessages
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Account {
@@ -34,7 +34,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)  
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -44,7 +44,7 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)  
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
