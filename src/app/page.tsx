@@ -31,7 +31,7 @@ export default function HomePage() {
       </p>
       {session ? (
         <Button size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
-          <Link href="/chat">Go to Chat</Link>
+          <Link href="/chat">Go to Home</Link>
         </Button>
       ) : (
         <div className="flex gap-4">
