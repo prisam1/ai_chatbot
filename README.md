@@ -36,15 +36,13 @@ A full-stack AI-powered chatbot application designed to facilitate interactive c
 
 # Steps to setup project
  
-# git clone : https://github.com/prisam1/ai_chatbot
+# git clone https://github.com/prisam1/ai_chatbot
 cd ai_chatbot
 Install NPM packages:
 
-Bash
-
-npm install
-# OR yarn install
-# OR npm install
+Bash 
+## OR yarn install
+## OR npm install
 Environment Variables
 Create a .env file in the root of your project and add the environment variables.
  
@@ -63,6 +61,6 @@ View History: Access your past conversations.
  
 
 # Contact
-# Your Name - Pritam Kumar Samaddar
+# Name - Pritam Kumar Samaddar
 # Project Link: https://github.com/prisam1/ai_chatbot
 # live link : https://ai-chatbot-puce-nine-71.vercel.app
