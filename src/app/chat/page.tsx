@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Download, LogOut } from 'lucide-react';
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
