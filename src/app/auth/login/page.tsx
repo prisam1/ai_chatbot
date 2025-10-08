@@ -9,6 +9,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from 'sonner';
+import Image from "next/image";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -53,7 +54,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Welcome Back!</CardTitle>
           <CardDescription>
             Enter your email below to login to your account.
           </CardDescription>
@@ -90,6 +91,7 @@ export default function Login() {
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
               <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
+                <Image src="/google.png" alt="me" width="24" height="24" />
                 Login with Google
               </Button>
             </div>

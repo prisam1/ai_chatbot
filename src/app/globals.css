@@ -113,11 +113,33 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+ 
+.scroll-hidden { 
+  scrollbar-width: none !important;  
+  -ms-overflow-style: none !important; 
+}
+ 
+.scroll-hidden::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;      
+  height: 0 !important;
+}
+ 
+.scroll-hidden [data-radix-scroll-area-viewport] { 
+  scrollbar-width: none !important; 
+  -ms-overflow-style: none !important; 
+}
+
+.scroll-hidden [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;      
+  height: 0 !important;
+}
 
 @layer base {
   *, ::before, ::after {
     border-color: var(--color-border);
-    outline-color: hsl(215, 20%, 65% / 0.5); /* fallback if --color-ring fails */
+    outline-color: hsl(215, 20%, 65% / 0.5);
     box-sizing: border-box;
   }
 

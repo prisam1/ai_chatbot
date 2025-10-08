@@ -32,10 +32,11 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { status } = useSession();
   const router = useRouter();
- 
+
   const { loading: isGenerating, generateLandingPage } = useChat()
 
   const latestMessage = messages.findLast((m) => m.role === 'bot');
@@ -47,6 +48,12 @@ export default function Chat() {
       toast.error("You have been logged out or your session has expired.");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
 
   useEffect(() => {
@@ -130,18 +137,20 @@ export default function Chat() {
 
 
         {/*User & bot message */}
-        <CardContent className={`grid ${"md:grid-cols-2"}  h-full p-0`}>
+        <CardContent className={`grid ${"md:grid-cols-2"}  h-full p-0 pr-4`}>
           <div className="flex flex-col h-full">
 
-            <ScrollArea
-              className="h-[calc(100vh-210px)] px-4 space-y-2 pr-2">
+            <div
+              className="h-[calc(100vh-210px)] px-4 space-y-2 pr-2 overflow-scroll scroll-hidden"
+              ref={scrollRef as React.RefObject<HTMLDivElement>}
+            >
 
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`relative group p-1${msg.role === 'user' ? ' text-right' : ' text-left'}`}
+                  className={`relative group p-1${msg.role === 'user' ? ' text-right ' : ' text-left'}`}
                 >
-                  <div className="inline-block bg-muted  px-3 py-2 rounded-lg max-w-2xl text-sm whitespace-pre-wrap overflow-auto max-h-60">
+                  <div className={`${msg.role === 'user' ? ' rounded-bl-lg rounded-tl-lg rounded-br-lg ' : 'rounded-lg scroll-hidden'} inline-block bg-muted px-3 py-2  max-w-2xl text-sm whitespace-pre-wrap overflow-auto max-h-60 shadow-md`}>
                     {msg.content}
                   </div>
 
@@ -150,7 +159,7 @@ export default function Chat() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      className="absolute top-1 ml-2 hover:bg-gray-300  transition"
+                      className="absolute top-1 ml-2 text-center hover:bg-gray-300 transition"
                       onClick={() => navigator.clipboard.writeText(msg.content)}
                     >
                       Copy
@@ -158,7 +167,7 @@ export default function Chat() {
                   )}
                 </div>
               ))}
-            </ScrollArea>
+            </div>
 
             <form onSubmit={handleSubmit} className="flex items-center gap-2 px-2 py-3 border-t">
               <Input
@@ -206,17 +215,19 @@ export default function Chat() {
           )}
 
           {iframeRef && !isGenerating && messages.length !== 0 && (
-            <Card className="border-l p-0">
+            <Card
+              className="border-l p-0">
               <iframe
                 ref={iframeRef}
                 title="Live Preview"
-                className="w-full h-full min-h-[500px] rounded-xl border-0"
+                className="w-full h-full min-h-[500px] rounded-xl border-0 overflow-scroll scroll-hidden"
                 sandbox="allow-scripts allow-same-origin"
               />
-            </Card>)}
-
+            </Card>
+          )
+          }
         </CardContent>
-      </Card>
-    </div>
+      </Card >
+    </div >
   );
 }
