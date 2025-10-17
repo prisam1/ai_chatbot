@@ -21,11 +21,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className=" min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
-      <h1 className="text-5xl font-extrabold mb-6 text-center leading-tight">
+    <div className="min-h-screen h-full flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
+      <h1 className="md:text-5xl text-xl font-extrabold mb-6 text-center leading-tight">
         Generate Stunning Landing Pages with AI
       </h1>
-      <p className="text-xl mb-8 text-center max-w-2xl">
+      <p className="md:text-xl text-sm mb-8 text-center max-w-2xl">
         Rapidly create beautiful and responsive HTML/CSS landing pages just by describing them.
         Perfect for MVPs and quick prototypes.
       </p>

@@ -51,7 +51,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="flex min-h-screen items-center md:p-0 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
@@ -87,11 +87,23 @@ export default function Login() {
                   Forgot your password?
                 </Link>
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                variant="default"
+                type="submit"
+                className="w-full"
+                disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-              <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
-                <Image src="/google.png" alt="me" width="24" height="24" />
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}>
+                <Image
+                  src="/google.png"
+                  alt="google"
+                  width="24"
+                  height="24" />
                 Login with Google
               </Button>
             </div>
