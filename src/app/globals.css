@@ -29,6 +29,7 @@
 :root {
   --radius: 0.625rem;
   --card: oklch(1 0 0);
+  --app-height: 100vh;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
@@ -80,9 +81,9 @@
   }
 
   body {
-    @apply bg-background text-foreground min-h-screen;
+    @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
     margin: 0;
     padding: 0;
   }
-}
+} 
