@@ -51,7 +51,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center md:p-0 p-4">
+    <div className="flex min-h-screen items-center justify-center md:p-0 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
