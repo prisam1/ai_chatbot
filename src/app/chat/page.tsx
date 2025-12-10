@@ -219,16 +219,16 @@ export default function Chat() {
         )}
 
         {iframeRef && !isGenerating && messages.length !== 0 && (
-          
-            <Card
-              className="border-l">
-              <iframe
-                ref={iframeRef}
-                title="Live Preview"
-                className="w-full h-full min-h-[80vh] rounded-xl overflow-scroll scroll-hidden"
-                sandbox="allow-scripts allow-same-origin"
-              />
-            </Card> 
+
+          <Card
+            className="border-l p-0 m-0">
+            <iframe
+              ref={iframeRef}
+              title="Live Preview"
+              className="w-full h-full min-h-[80vh] rounded-xl overflow-scroll scroll-hidden"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </Card>
         )
         }
       </CardContent>
