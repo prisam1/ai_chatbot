@@ -1,34 +1,19 @@
-// "use client";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import NextAuthSessionProvider from "../components/providers/next-auth-provider";
 import { Toaster } from 'sonner';
-//import { useEffect } from "react";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
-// function AppHeightSync() {
-//   useEffect(() => {
-//     const setAppHeight = () => {
-//       document.documentElement.style.setProperty(
-//         '--app-height',
-//         `${window.innerHeight}px`
-//       );
-//     };
-
-//     setAppHeight(); // Set on initial load
-//     window.addEventListener('resize', setAppHeight); // Update on resize (e.g., orientation change)
-
-//     return () => window.removeEventListener('resize', setAppHeight);
-//   }, []);
-
-//   return null;
-// }
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "AI Chatbot for Landing Pages",
   description: "Generate HTML/CSS landing pages with AI.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -38,7 +23,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* <AppHeightSync /> */}
       <body className={inter.className}>
         <NextAuthSessionProvider>
           {children}

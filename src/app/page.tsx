@@ -1,24 +1,13 @@
-"use client";
-
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { authOptions } from "@/lib/auth";
 
-export default function HomePage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === "authenticated") {
-      router.push("/chat");
-    }
-  }, [status, router]);
-
-  if (status === "loading") {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
-  }
+export default async function HomePage() {
+  // Redirect on the server, no loading flash
+  const session = await getServerSession(authOptions);
+  if (session) redirect("/chat");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4">
@@ -29,20 +18,14 @@ export default function HomePage() {
         Rapidly create beautiful and responsive HTML/CSS landing pages just by describing them.
         Perfect for MVPs and quick prototypes.
       </p>
-      {session ? (
-        <Button size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
-          <Link href="/chat">Go to Home</Link>
+      <div className="flex gap-4">
+        <Button asChild size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
+          <Link href="/auth/login">Login</Link>
         </Button>
-      ) : (
-        <div className="flex gap-4">
-          <Button size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
-            <Link href="/auth/login">Login</Link>
-          </Button>
-          <Button size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
-            <Link href="/auth/register">Sign Up</Link>
-          </Button>
-        </div>
-      )}
+        <Button asChild size="lg" className="text-lg px-8 py-4 bg-white text-purple-600 hover:bg-gray-100">
+          <Link href="/auth/register">Sign Up</Link>
+        </Button>
+      </div>
     </div>
   );
 }

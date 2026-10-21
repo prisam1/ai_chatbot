@@ -1,0 +1,54 @@
+import { z } from "zod";
+
+export const PROMPT_MIN = 3;
+export const PROMPT_MAX = 2000;
+export const PASSWORD_MIN = 8;
+// bcrypt ignores everything after 72 bytes
+export const PASSWORD_MAX_BYTES = 72;
+
+const byteLength = (value: string) => new TextEncoder().encode(value).length;
+
+export const emailSchema = z
+  .string({ required_error: "Email is required" })
+  .trim()
+  .toLowerCase()
+  .min(1, "Email is required")
+  .max(254, "Email is too long")
+  .email("Enter a valid email address");
+
+export const passwordSchema = z
+  .string({ required_error: "Password is required" })
+  .min(PASSWORD_MIN, `Password must be at least ${PASSWORD_MIN} characters`)
+  .refine((p) => byteLength(p) <= PASSWORD_MAX_BYTES, "Password is too long")
+  .refine((p) => /[a-z]/.test(p) && /[A-Z]/.test(p), "Use both uppercase and lowercase letters")
+  .refine((p) => /\d/.test(p), "Include at least one number");
+
+export const registerSchema = z.object({ email: emailSchema, password: passwordSchema });
+
+// Login skips strength rules so older accounts can still sign in
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z
+    .string({ required_error: "Password is required" })
+    .min(1, "Password is required")
+    .refine((p) => byteLength(p) <= PASSWORD_MAX_BYTES, "Password is too long"),
+});
+
+export const registerFormSchema = registerSchema
+  .extend({ confirmPassword: z.string().min(1, "Please confirm your password") })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export const promptSchema = z.object({
+  prompt: z
+    .string({ required_error: "Prompt is required" })
+    .trim()
+    .min(PROMPT_MIN, `Describe your page in at least ${PROMPT_MIN} characters`)
+    .max(PROMPT_MAX, `Keep your description under ${PROMPT_MAX} characters`),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RegisterFormInput = z.infer<typeof registerFormSchema>;

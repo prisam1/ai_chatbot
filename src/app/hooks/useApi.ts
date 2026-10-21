@@ -1,27 +1,44 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 
- 
-interface ApiHookOptions<TData, TBody extends object | FormData | URLSearchParams | string | undefined = undefined> {
+type Body = object | FormData | URLSearchParams | string | undefined;
+
+interface ApiHookOptions<TData, TBody extends Body = undefined> {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   headers?: HeadersInit;
-  body?: TBody;  
+  body?: TBody;
+  signal?: AbortSignal;
   onSuccess?: (data: TData) => void;
-  onError?: (error: string) => void;
+  onError?: (error: string, status: number) => void;
   showToast?: boolean;
   successMessage?: string;
 }
 
- 
-interface ApiResponse<TData, TBody extends object | FormData | URLSearchParams | string | undefined = undefined> {
+interface ApiResponse<TData, TBody extends Body = undefined> {
   data: TData | null;
   loading: boolean;
   error: string | null;
   fetchData: (url: string, options?: ApiHookOptions<TData, TBody>) => Promise<TData | null>;
 }
 
- 
-export const useApi = <TData = unknown, TBody extends object | FormData | URLSearchParams | string | undefined = undefined>(): ApiResponse<TData, TBody> => {
+// Pulls a readable message out of any error body shape
+function extractMessage(raw: string, status: number) {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed === 'string' && parsed) return parsed;
+    if (typeof parsed === 'object' && parsed !== null) {
+      for (const key of ['error', 'message', 'msg'] as const) {
+        const value = (parsed as Record<string, unknown>)[key];
+        if (typeof value === 'string' && value) return value;
+      }
+    }
+  } catch {
+    if (raw && raw.length < 300 && !raw.trimStart().startsWith('<')) return raw;
+  }
+  return status === 0 ? 'Network error. Check your connection.' : `Request failed (${status})`;
+}
+
+export const useApi = <TData = unknown, TBody extends Body = undefined>(): ApiResponse<TData, TBody> => {
   const [data, setData] = useState<TData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,121 +46,65 @@ export const useApi = <TData = unknown, TBody extends object | FormData | URLSea
   const fetchData = useCallback(async (url: string, options?: ApiHookOptions<TData, TBody>): Promise<TData | null> => {
     setLoading(true);
     setError(null);
-    setData(null);
 
     const {
       method = 'GET',
       headers: initialHeaders,
-      body,  
+      body,
+      signal,
       onSuccess,
       onError,
       showToast = true,
       successMessage,
     } = options || {};
 
+    const fail = (message: string, status: number) => {
+      setError(message);
+      if (showToast) toast.error(message);
+      onError?.(message, status);
+      return null;
+    };
+
     try {
-      const headers = new Headers(initialHeaders || { 'Content-Type': 'application/json' });
+      const headers = new Headers(initialHeaders);
+      const fetchOptions: RequestInit = { method, headers, signal, credentials: 'same-origin' };
 
-      const fetchOptions: RequestInit = {
-        method,
-        headers: headers,
-      };
-
-      if (body !== undefined) {
-        if (body instanceof FormData) {
-          fetchOptions.body = body;
-          headers.delete('Content-Type');
-        } else if (body instanceof URLSearchParams) {
-          fetchOptions.body = body;
-          headers.set('Content-Type', 'application/x-www-form-urlencoded');
-        } else if (typeof body === 'object' && body !== null) {
-           
-          fetchOptions.body = JSON.stringify(body);
-          headers.set('Content-Type', 'application/json');
-        } else if (typeof body === 'string') {
-          fetchOptions.body = body;
-          headers.set('Content-Type', 'text/plain'); 
-        } else {
-            console.error("Unsupported body type provided to useApi:", typeof body, body);
-            throw new Error("Unsupported request body type.");
-        }
+      if (body instanceof FormData) {
+        fetchOptions.body = body;
+      } else if (body instanceof URLSearchParams) {
+        fetchOptions.body = body;
+        headers.set('Content-Type', 'application/x-www-form-urlencoded');
+      } else if (typeof body === 'string') {
+        fetchOptions.body = body;
+        headers.set('Content-Type', 'text/plain');
+      } else if (typeof body === 'object' && body !== null) {
+        fetchOptions.body = JSON.stringify(body);
+        headers.set('Content-Type', 'application/json');
       }
-
-      fetchOptions.headers = headers;
 
       const response = await fetch(url, fetchOptions);
+      const raw = await response.text();
 
-      if (!response.ok) {
-        let errorMessage = `HTTP error! Status: ${response.status}`;
-        let errorData: unknown = null;
+      if (!response.ok) return fail(extractMessage(raw, response.status), response.status);
 
-        try {
-          errorData = await response.json();
-          if (typeof errorData === 'object' && errorData !== null) {
-            if ('message' in errorData && typeof errorData.message === 'string') {
-              errorMessage = errorData.message;
-            } else if ('error' in errorData && typeof errorData.error === 'string') {
-              errorMessage = errorData.error;
-            } else if ('msg' in errorData && typeof errorData.msg === 'string') {
-              errorMessage = errorData.msg;
-            }
-          } else if (typeof errorData === 'string' && errorData.length > 0) {
-            errorMessage = errorData;
-          }
-        } catch (jsonError) {
-          try {
-            const textError = await response.text();
-            if (textError.length > 0) {
-              errorMessage = textError;
-            }
-          } catch (textParseError) {
-            console.error("Error reading response as text:", textParseError);
-          }
-          console.error("Error parsing response JSON, falling back to text or default:", jsonError);
-        }
-
-        setError(errorMessage);
-        if (showToast) {
-          toast.error(errorMessage);
-        }
-        onError?.(errorMessage);
-        return null;
-      }
-
-      const contentType = response.headers.get('content-type');
       let responseData: TData | null = null;
-
-      if (contentType && contentType.includes('application/json')) {
-        responseData = await response.json();
-      } else if (contentType && contentType.startsWith('text/')) {
-          responseData = await response.text() as TData;
-      } else {
-          try {
-              const textBody = await response.text();
-              if (textBody) {
-                  console.warn("Response was not JSON or plain text, but had content:", textBody);
-              }
-          } catch { /* ignore */ }
+      if (raw) {
+        const isJson = response.headers.get('content-type')?.includes('application/json');
+        try {
+          responseData = (isJson ? JSON.parse(raw) : raw) as TData;
+        } catch {
+          return fail('The server sent an invalid response.', response.status);
+        }
       }
 
       setData(responseData);
-      if (showToast) {
-        toast.success(successMessage || 'Operation successful!');
-      }
-
-      if (responseData !== null) {
-        onSuccess?.(responseData);
-      }
+      if (showToast) toast.success(successMessage || 'Operation successful!');
+      if (responseData !== null) onSuccess?.(responseData);
       return responseData;
-
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
-      setError(errorMessage);
-      if (showToast) {
-        toast.error(errorMessage);
-      }
-      onError?.(errorMessage);
-      return null;
+      // Cancelled on purpose, not an error
+      if (signal?.aborted) return null;
+      return fail(err instanceof TypeError ? 'Network error. Check your connection.' : 'An unexpected error occurred.', 0);
     } finally {
       setLoading(false);
     }

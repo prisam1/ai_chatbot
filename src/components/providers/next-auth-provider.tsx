@@ -1,4 +1,4 @@
-"use client";  
+"use client";
 
 import { SessionProvider } from "next-auth/react";
 import React from "react";
@@ -10,5 +10,6 @@ interface NextAuthSessionProviderProps {
 export default function NextAuthSessionProvider({
   children,
 }: NextAuthSessionProviderProps) {
-  return <SessionProvider>{children}</SessionProvider>;
+  // Recheck the session every 5 minutes and when the tab regains focus
+  return <SessionProvider refetchInterval={5 * 60}>{children}</SessionProvider>;
 }
