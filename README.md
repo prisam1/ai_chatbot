@@ -21,9 +21,9 @@ A full-stack AI-powered chatbot application designed to facilitate interactive c
 
 ## 🧰 Tech Stack
 
-| Tech             | Usage                                     |
+| Tech             | Usage                                      |
 |------------------|--------------------------------------------|
-| Next.js          | App framework (App Router)                |
+| Next.js          | App framework (App Router)                 |
 | TypeScript       | Type safety                                |
 | Tailwind CSS     | Styling and layout                         |
 | Prisma           | ORM                                        |
