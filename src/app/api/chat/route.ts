@@ -5,6 +5,7 @@ import { requireUserId } from "@/lib/auth";
 import { generateLandingPage } from "@/lib/gemini";
 import { assertSameOrigin, errorResponse, HttpError, json, readJson } from "@/lib/http";
 import { enforceRateLimit } from "@/lib/rate-limit";
+import { getUsage, recordUsage } from "@/lib/usage";
 import { promptSchema } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -13,7 +14,7 @@ export const maxDuration = 120;
 const HISTORY_LIMIT = 50;
 const CONTEXT_LIMIT = 6;
 const MAX_STORED = 100;
-const messageSelect = { id: true, role: true, content: true, createdAt: true } as const;
+const messageSelect = { id: true, role: true, content: true, createdAt: true, shareId: true } as const;
 
 declare global {
   var chatInFlight: Set<string> | undefined;
@@ -25,13 +26,16 @@ const inFlight = (global.chatInFlight ??= new Set<string>());
 export async function GET() {
   try {
     const userId = await requireUserId();
-    const messages = await prisma.chatMessage.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: HISTORY_LIMIT,
-      select: messageSelect,
-    });
-    return json({ messages: messages.reverse() });
+    const [messages, usage] = await Promise.all([
+      prisma.chatMessage.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: HISTORY_LIMIT,
+        select: messageSelect,
+      }),
+      getUsage(userId),
+    ]);
+    return json({ messages: messages.reverse(), usage });
   } catch (err) {
     return errorResponse(err, "API_CHAT_GET");
   }
@@ -48,25 +52,29 @@ export async function POST(req: NextRequest) {
     lockedUserId = userId;
 
     enforceRateLimit(`chat:min:${userId}`, 5, 60 * 1000, "You're generating too fast. Please wait a minute.");
-    enforceRateLimit(`chat:day:${userId}`, 100, 24 * 60 * 60 * 1000, "Daily generation limit reached. Please come back tomorrow.");
 
     const parsed = promptSchema.safeParse(await readJson(req, 8 * 1024));
     if (!parsed.success) throw new HttpError(400, parsed.error.issues[0]?.message ?? "Invalid prompt");
-    const { prompt } = parsed.data;
+    const { prompt, options } = parsed.data;
 
-    const history = await prisma.chatMessage.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: CONTEXT_LIMIT,
-      select: { role: true, content: true },
-    });
+    const [usage, history] = await Promise.all([
+      getUsage(userId),
+      prisma.chatMessage.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: CONTEXT_LIMIT,
+        select: { role: true, content: true },
+      }),
+    ]);
+    if (usage.used >= usage.limit) throw new HttpError(429, "Daily generation limit reached. Please come back tomorrow.");
 
-    const html = await generateLandingPage(prompt, history.reverse(), req.signal);
+    const html = await generateLandingPage(prompt, options, history.reverse(), req.signal);
 
     const now = Date.now();
     const [userMessage, message] = await prisma.$transaction([
       prisma.chatMessage.create({ data: { userId, role: "user", content: prompt, createdAt: new Date(now) }, select: messageSelect }),
       prisma.chatMessage.create({ data: { userId, role: "assistant", content: html, createdAt: new Date(now + 1) }, select: messageSelect }),
+      ...recordUsage(userId),
     ]);
 
     // Keep only the newest messages per user
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
     });
     if (stale.length) await prisma.chatMessage.deleteMany({ where: { id: { in: stale.map((m) => m.id) } } });
 
-    return json({ userMessage, message }, 201);
+    return json({ userMessage, message, usage: { ...usage, used: usage.used + 1 } }, 201);
   } catch (err) {
     // Session still valid but the user row was deleted
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003") {

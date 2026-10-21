@@ -1,44 +1,59 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Card, CardHeader, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send, Download, LogOut, Copy, Square, Trash2, Eye, Loader2 } from 'lucide-react';
+import { LogOut, Trash2, Sparkles, Zap } from 'lucide-react';
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
-import { useChat } from '../hooks/useChat';
 import { toast } from 'sonner';
+import { useChat } from '../hooks/useChat';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { PROMPT_MAX, promptSchema } from '@/lib/validation';
-import { Message } from '@/types/message';
+import { Composer } from '@/components/chat/composer';
+import { MessageList } from '@/components/chat/message-list';
+import { PreviewPanel } from '@/components/chat/preview-panel';
+import { GenerationOptions, generationOptionsSchema, promptSchema } from '@/lib/validation';
 
-// Links inside the preview open in a new tab instead of inside the iframe
-function withBaseTarget(html: string) {
-  const base = '<base target="_blank">';
-  return /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (tag) => tag + base) : base + html;
-}
+const OPTIONS_KEY = 'pageforge:options';
 
-function formatSize(text: string) {
-  const kb = new Blob([text]).size / 1024;
-  return kb < 1 ? '<1 KB' : `${kb.toFixed(1)} KB`;
+function loadOptions(): GenerationOptions {
+  try {
+    const parsed = generationOptionsSchema.safeParse(JSON.parse(localStorage.getItem(OPTIONS_KEY) ?? '{}'));
+    return parsed.success ? parsed.data : {};
+  } catch {
+    return {};
+  }
 }
 
 export default function Chat() {
   const [input, setInput] = useState('');
+  const [options, setOptions] = useState<GenerationOptions>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
-  const { messages, generateLandingPage, cancel, clearHistory, loading: isGenerating, historyLoading, clearing } = useChat();
+  const {
+    messages, usage, generateLandingPage, cancel, enhancePrompt, clearHistory, deleteVersion, setShared,
+    loading: isGenerating, enhancing, historyLoading, clearing, sharing,
+  } = useChat();
 
   const pages = useMemo(() => messages.filter((m) => m.role === 'assistant'), [messages]);
   const previewMessage = pages.find((m) => m.id === selectedId) ?? pages.at(-1);
-  const previewHtml = useMemo(() => (previewMessage ? withBaseTarget(previewMessage.content) : ''), [previewMessage]);
+  const lastPrompt = messages.findLast((m) => m.role === 'user' && !m.id.startsWith('temp-'))?.content;
+
+  // Restore the user's last style choices
+  useEffect(() => setOptions(loadOptions()), []);
+
+  const updateOptions = (next: GenerationOptions) => {
+    setOptions(next);
+    try {
+      localStorage.setItem(OPTIONS_KEY, JSON.stringify(next));
+    } catch { /* storage blocked, keep in memory only */ }
+  };
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -51,22 +66,35 @@ export default function Chat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages.length, isGenerating]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isGenerating) return;
+  // Esc stops a running generation
+  useEffect(() => {
+    if (!isGenerating) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && cancel();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isGenerating, cancel]);
 
-    const parsed = promptSchema.safeParse({ prompt: input });
+  const submit = async (text: string) => {
+    if (isGenerating) return;
+    const parsed = promptSchema.safeParse({ prompt: text, options });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? 'Invalid prompt');
       return;
     }
 
-    const { prompt } = parsed.data;
     setInput('');
-    setSelectedId(null);
-    const ok = await generateLandingPage(prompt);
+    const page = await generateLandingPage(parsed.data.prompt, parsed.data.options);
+    if (page) setSelectedId(page.id);
     // Give the prompt back so the user can retry
-    if (!ok) setInput((current) => current || prompt);
+    else setInput((current) => current || parsed.data.prompt);
+  };
+
+  const handleEnhance = async () => {
+    const enhanced = await enhancePrompt(input);
+    if (enhanced) {
+      setInput(enhanced);
+      toast.success('Prompt enhanced. Review it and hit send.');
+    }
   };
 
   const handleLogout = async () => {
@@ -77,41 +105,57 @@ export default function Chat() {
 
   const handleClear = async () => {
     if (isGenerating) cancel();
-    const ok = await clearHistory();
-    if (ok) {
+    if (await clearHistory()) {
       setSelectedId(null);
       setIsClearModalOpen(false);
     }
   };
 
-  const copyHtml = async (html: string) => {
-    try {
-      await navigator.clipboard.writeText(html);
-      toast.success('HTML copied to clipboard.');
-    } catch {
-      toast.error('Could not copy. Your browser blocked clipboard access.');
-    }
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    if (await deleteVersion(deleteId) && selectedId === deleteId) setSelectedId(null);
+    setDeleteId(null);
   };
 
-  const downloadFile = (msg: Message | undefined) => {
-    if (!msg) return;
-    const blob = new Blob([msg.content], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `landing-page-${pages.indexOf(msg) + 1}.html`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
+  const usageLeft = usage ? Math.max(usage.limit - usage.used, 0) : null;
+  const email = session?.user?.email ?? '';
 
   return (
-    <Card className="flex min-h-screen md:py-6 py-4 border-none rounded-none bg-gradient-to-r from-blue-500 to-purple-600">
-      <CardHeader className="flex flex-row justify-between md:py-4 py-0 items-center border-b gap-2">
-        <h1 className="md:text-2xl font-bold text-white">AI Landing Page Generator</h1>
+    <div className="flex min-h-dvh flex-col bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700">
+      <header className="flex items-center justify-between gap-2 border-b border-white/20 px-3 py-3 md:px-6">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 shadow-inner">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div className="leading-tight">
+            <h1 className="text-lg font-extrabold tracking-tight text-white md:text-2xl">
+              PageForge <span className="bg-gradient-to-r from-amber-200 to-pink-200 bg-clip-text text-transparent">AI</span>
+            </h1>
+            <p className="hidden text-xs text-white/80 md:block">Describe it. We&apos;ll build it.</p>
+          </div>
+        </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {usage && (
+            <div
+              className="hidden items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium text-white sm:flex"
+              title={`${usage.used} of ${usage.limit} generations used in the last 24 hours`}
+            >
+              <Zap className="h-3.5 w-3.5" />
+              <span>{usageLeft} left today</span>
+              <div className="h-1.5 w-16 overflow-hidden rounded-full bg-white/30">
+                <div className="h-full bg-white" style={{ width: `${Math.min((usage.used / usage.limit) * 100, 100)}%` }} />
+              </div>
+            </div>
+          )}
+          {email && (
+            <div
+              className="hidden h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold uppercase text-purple-700 md:flex"
+              title={email}
+            >
+              {email[0]}
+            </div>
+          )}
           <Button
             variant="outline"
             onClick={() => setIsClearModalOpen(true)}
@@ -126,146 +170,71 @@ export default function Chat() {
             <span className="hidden md:inline">Logout</span>
           </Button>
         </div>
+      </header>
 
-        <ConfirmDialog
-          open={isLogoutModalOpen}
-          onOpenChange={setIsLogoutModalOpen}
-          title="Confirm Logout"
-          description="Are you sure you want to log out? Your current session will be ended."
-          confirmLabel="Logout"
-          onConfirm={handleLogout}
-        />
-        <ConfirmDialog
-          open={isClearModalOpen}
-          onOpenChange={setIsClearModalOpen}
-          title="Clear Chat History"
-          description="This permanently deletes all your prompts and generated pages."
-          confirmLabel={clearing ? "Clearing..." : "Clear"}
-          onConfirm={handleClear}
-          loading={clearing}
-        />
-      </CardHeader>
+      <ConfirmDialog
+        open={isLogoutModalOpen}
+        onOpenChange={setIsLogoutModalOpen}
+        title="Confirm Logout"
+        description="Are you sure you want to log out? Your current session will be ended."
+        confirmLabel="Logout"
+        onConfirm={handleLogout}
+      />
+      <ConfirmDialog
+        open={isClearModalOpen}
+        onOpenChange={setIsClearModalOpen}
+        title="Clear Chat History"
+        description="This permanently deletes all your prompts, generated pages and share links."
+        confirmLabel={clearing ? "Clearing..." : "Clear"}
+        onConfirm={handleClear}
+        loading={clearing}
+      />
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Version"
+        description="This deletes this page version and its prompt. Any share link for it stops working."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+      />
 
-      {/*User & bot message */}
-      <CardContent className="md:grid flex flex-col-reverse md:grid-cols-2 p-0 md:pr-4">
-        <div className="flex flex-col">
-          <div
-            className="h-[calc(100vh-210px)] md:px-4 px-2 space-y-2 overflow-y-auto scroll-hidden"
+      <main className="grid flex-1 gap-3 p-2 md:grid-cols-[minmax(340px,2fr)_3fr] md:p-4">
+        <section className="flex h-[75dvh] flex-col overflow-hidden rounded-2xl border border-white/20 bg-white/10 backdrop-blur md:h-[calc(100dvh-100px)]">
+          <MessageList
             ref={scrollRef}
-            aria-live="polite"
-          >
-            {historyLoading && (
-              <div className="flex justify-center py-8 text-white">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            )}
+            messages={messages}
+            pages={pages}
+            previewId={previewMessage?.id}
+            onSelect={setSelectedId}
+            onDelete={setDeleteId}
+            onStarter={setInput}
+            generating={isGenerating}
+            loading={historyLoading}
+          />
+          <Composer
+            value={input}
+            onChange={setInput}
+            onSubmit={() => submit(input)}
+            onCancel={cancel}
+            onEnhance={handleEnhance}
+            onRegenerate={lastPrompt ? () => submit(lastPrompt) : undefined}
+            options={options}
+            onOptionsChange={updateOptions}
+            generating={isGenerating}
+            enhancing={enhancing}
+            hasPage={pages.length > 0}
+          />
+        </section>
 
-            {messages.map((msg) => (
-              <div key={msg.id} className={`p-1 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                {msg.role === 'user' ? (
-                  <div className="inline-block bg-muted px-3 py-2 max-w-2xl text-sm whitespace-pre-wrap break-words text-left rounded-bl-lg rounded-tl-lg rounded-br-lg shadow-md">
-                    {msg.content}
-                  </div>
-                ) : (
-                  <div className={`inline-flex flex-wrap items-center gap-2 bg-muted px-3 py-2 rounded-lg shadow-md text-sm ${previewMessage?.id === msg.id ? 'ring-2 ring-purple-700' : ''}`}>
-                    <span className="font-medium">Landing page</span>
-                    <span className="text-muted-foreground text-xs">{formatSize(msg.content)}</span>
-                    <Button variant="secondary" size="sm" onClick={() => setSelectedId(msg.id)} aria-label="Preview">
-                      <Eye /> Preview
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => copyHtml(msg.content)} aria-label="Copy HTML">
-                      <Copy /> Copy
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => downloadFile(msg)} aria-label="Download HTML">
-                      <Download />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {isGenerating && (
-              <div className="p-1 text-left">
-                <div className="inline-flex items-center gap-2 bg-muted px-3 py-2 rounded-lg shadow-md text-sm">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Generating your page...
-                </div>
-              </div>
-            )}
-          </div>
-
-          <form onSubmit={handleSubmit} className="flex items-center gap-2 px-2 py-3 border-t">
-            <div className="relative flex-1">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Describe your landing page..."
-                className="placeholder:text-white text-white pr-16"
-                maxLength={PROMPT_MAX}
-                disabled={isGenerating}
-                aria-label="Describe your landing page"
-              />
-              {input.length > PROMPT_MAX * 0.8 && (
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white/80">
-                  {input.length}/{PROMPT_MAX}
-                </span>
-              )}
-            </div>
-            {isGenerating ? (
-              <Button type="button" onClick={cancel} size="icon" variant="destructive" aria-label="Stop generating">
-                <Square className="w-4 h-4" />
-              </Button>
-            ) : (
-              <Button type="submit" disabled={!input.trim()} size="icon" aria-label="Send">
-                <Send className="w-4 h-4" />
-              </Button>
-            )}
-
-            {/*Download Button */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => downloadFile(previewMessage)}
-              disabled={!previewMessage}
-              size="icon"
-              aria-label="Download current page"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
-          </form>
-        </div>
-
-        {!historyLoading && pages.length === 0 && !isGenerating && (
-          <Card className="border-l p-0 md:m-0 m-2">
-            <CardHeader className="p-4">
-              <h2 className="text-xl font-semibold">
-                Start by asking for a landing page, e.g., &quot;Create a modern hero section for a tech startup.&quot;
-              </h2>
-            </CardHeader>
-          </Card>
-        )}
-
-        {/*Live Preview */}
-        {isGenerating && !previewMessage && (
-          <Card className="border-l p-0 md:m-0 m-2">
-            <CardHeader className="p-4">
-              <h2 className="text-xl font-semibold">Generating...</h2>
-            </CardHeader>
-          </Card>
-        )}
-
-        {previewMessage && (
-          <Card className="border-l p-0 m-0 overflow-hidden">
-            {/* No allow-same-origin: generated code can't touch this app, its cookies or its APIs */}
-            <iframe
-              title="Live Preview"
-              srcDoc={previewHtml}
-              className="w-full h-full min-h-[80vh] rounded-xl"
-              sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-              referrerPolicy="no-referrer"
-            />
-          </Card>
-        )}
-      </CardContent>
-    </Card>
+        <PreviewPanel
+          page={previewMessage}
+          version={previewMessage ? pages.indexOf(previewMessage) + 1 : 0}
+          generating={isGenerating}
+          sharing={sharing}
+          onShare={setShared}
+          className="order-first h-[75dvh] md:order-none md:h-[calc(100dvh-100px)]"
+        />
+      </main>
+    </div>
   );
 }

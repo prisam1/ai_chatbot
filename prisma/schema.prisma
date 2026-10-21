@@ -4,7 +4,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url       = env("DATABASE_URL")
+  // Migrations need a direct (session) connection, not the transaction pooler
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -17,6 +19,7 @@ model User {
   accounts       Account[]
   sessions       Session[]
   chatMessages   ChatMessage[] // A User can have many ChatMessages
+  generations    GenerationUsage[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -60,6 +63,17 @@ model ChatMessage {
   userId    String
   role      String // "user" or "assistant"
   content   String   @db.Text
+  shareId   String?  @unique
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// One row per generation, used for the daily limit
+model GenerationUsage {
+  id        String   @id @default(cuid())
+  userId    String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

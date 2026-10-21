@@ -7,8 +7,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "AI Chatbot for Landing Pages",
-  description: "Generate HTML/CSS landing pages with AI.",
+  title: "PageForge AI · Landing pages in seconds",
+  description: "Describe it. We'll build it. Generate, edit and share responsive landing pages with AI.",
 };
 
 export const viewport: Viewport = {

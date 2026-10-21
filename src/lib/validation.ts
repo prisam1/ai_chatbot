@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SECTION_IDS, STYLE_IDS } from "./presets";
 
 export const PROMPT_MIN = 3;
 export const PROMPT_MAX = 2000;
@@ -41,14 +42,32 @@ export const registerFormSchema = registerSchema
     path: ["confirmPassword"],
   });
 
+const promptText = z
+  .string({ required_error: "Prompt is required" })
+  .trim()
+  .min(PROMPT_MIN, `Describe your page in at least ${PROMPT_MIN} characters`)
+  .max(PROMPT_MAX, `Keep your description under ${PROMPT_MAX} characters`);
+
+// Strict enums and a hex check, so nothing free-form reaches the AI through options
+export const generationOptionsSchema = z
+  .object({
+    style: z.enum(STYLE_IDS).optional(),
+    accent: z.string().regex(/^#[0-9a-f]{6}$/i, "Invalid colour").optional(),
+    sections: z.array(z.enum(SECTION_IDS)).max(SECTION_IDS.length).optional(),
+  })
+  .strict();
+
 export const promptSchema = z.object({
-  prompt: z
-    .string({ required_error: "Prompt is required" })
-    .trim()
-    .min(PROMPT_MIN, `Describe your page in at least ${PROMPT_MIN} characters`)
-    .max(PROMPT_MAX, `Keep your description under ${PROMPT_MAX} characters`),
+  prompt: promptText,
+  options: generationOptionsSchema.optional(),
 });
 
+export const enhanceSchema = z.object({ prompt: promptText });
+
+export const idSchema = z.string().min(1).max(64).regex(/^[a-z0-9]+$/i, "Invalid id");
+export const shareIdSchema = z.string().regex(/^[A-Za-z0-9_-]{24}$/, "Invalid link");
+
+export type GenerationOptions = z.infer<typeof generationOptionsSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterFormInput = z.infer<typeof registerFormSchema>;
